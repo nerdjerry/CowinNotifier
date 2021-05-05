@@ -30,6 +30,7 @@ async function getAvailableSlotsForDateByPincode(date, pincode) {
     }).then(res => res.json())
         .then(json => {
             parseResponseAndNotify(json)
+            bookSlot(json);
         });
 }
 
@@ -55,7 +56,6 @@ function parseResponseAndNotify(json) {
                     notifier.notify(alertMsg);
                     console.log(alertMsg)
                 } 
-                // Uncomment for testing
                 // else {
                 //     let alertMsg = `Found a slot at ${center.name} for date ${session.date}`;
                 //     notifier.notify(alertMsg);
@@ -64,5 +64,41 @@ function parseResponseAndNotify(json) {
             }
         })
     });
-
 }
+
+function bookSlot(json){
+
+    if(!json || !json.centers){
+        console.log("Response Changed Error!");
+    }
+
+    
+    json.centers.filter(center =>{
+        return center.id == 174041 || center.name == 554256
+    }).forEach(session => {
+        if(session.min_age_limit == 18) {
+            if(session.available_capacity != 0){
+                fetch(`${constants.BOOK}`, {
+                    "method" : "POST",
+                    "body" : getSlotJSON(session.session_id)
+                }).then(res => res.json())
+                   .then(json => {
+                        console.log(json);
+                   })
+            }
+        }
+    })
+}
+
+function getSlotJSON(session_id){
+    let myPreference = {
+        "dose": 1,
+        "session_id": session_id,
+        "slot": "01:00PM-03:00PM",
+        "beneficiaries": [
+            "27616081440890",
+            "52449367588720"
+        ]
+    }
+    return JSON.stringify(myPreference);
+} 
